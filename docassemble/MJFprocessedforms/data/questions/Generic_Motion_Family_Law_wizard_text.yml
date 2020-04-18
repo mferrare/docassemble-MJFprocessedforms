@@ -212,80 +212,109 @@ code: |
   })
 ---
 question: |
-  Screen five
+  Commonwealth of Massachusetts
+  
+  The Trial Court
+  
+  Probate and Family Court Department
 subquestion: |
-  Placeholder text
+  #### Information about the motion.
 fields:
-  - 'court_division': courts[0].division
-  - 'court_division__2': courts[0].division
-  - 'motion_name__2': motion_name
-  - 'motion_date__2': motion_date
-    datatype: date
-  - 'service_was_in_hand': service_was_in_hand
-    datatype: yesno
-  - 'service_was_in_am': service_was_in_am
-    datatype: yesno
-  - 'service_was_in_pm': service_was_in_pm
-    datatype: yesno
-  - 'service_date': service_date
-    datatype: date
-  - 'service_time': service_time
-  - 'service_was_by_mail': service_was_by_mail
-    datatype: yesno
-  - 'mail_date': mail_date
-    datatype: date
----
-question: |
-  Screen four
-subquestion: |
-  Placeholder text
-fields:
-  - 'motion_allowed': motion_allowed
-    datatype: yesno
-  - 'motion_denied': motion_denied
-    datatype: yesno
-  - 'denied_reason_1': denied_reason_1
-  - 'denied_reason_2': denied_reason_2
-  - 'denied_reason_3': denied_reason_3
-  - 'motion_granted_denied_date': motion_granted_denied_date
-    datatype: date
----
-question: |
-  Screen one
-subquestion: |
-  Placeholder text
-fields:
-  - 'motion_name': motion_name
-  - 'user_is_plaintiff': users[0].is_plaintiff
-    datatype: yesno
-  - 'user_is_defendant': users[0].is_defendant
-    datatype: yesno
-  - 'user_is_petitioner': users[0].is_petitioner
-    datatype: yesno
-  - 'user_is_respondant': users[0].is_respondant
-    datatype: yesno
-  - 'user_requests': users[0].requests
+  - Division: courts[0].division
+  - 'Motion For': motion_name
+  - 'Motion requested': users[0].requests
     input type: area
-  - 'motion_date': motion_date
+  - 'Date': motion_date
     datatype: date
 ---
 question: |
-  Screen three
+  Commonwealth of Massachusetts
+  
+  The Trial Court
+  
+  Probate and Family Court Department
 subquestion: |
-  Placeholder text
+  #### Representation
 fields:
-  - 'user_bbo_number': users[0].bbo_number
+  - Are you representing yourself?: MJFself_represented
+    datatype: yesnoradio
+  - 'Attorney BBO Number': users[0].bbo_number
+    show if:
+      variable: MJFself_represented
+      is: False
+---
+# Define BBO number if self represented
+code: |
+  if MJFself_represented:
+    users[0].bbo_number = 'N/A'
 ---
 question: |
-  Screen two
+  Commonwealth of Massachusetts
+  
+  The Trial Court
+  
+  Probate and Family Court Department
 subquestion: |
-  Placeholder text
+  #### Location, date and time of hearing
 fields:
-  - 'hearing_court_city': city
-  - 'hearing_date_month_day_year': hearing_date_month_day_year
+  - 'City in which motion is to be heard': city
+  - 'Hearing date': hearing_date_month_day_year
     datatype: date
-  - 'hearing_time': hearing_time
+  - 'Hearing time': MJFraw_hearing_time
+    datatype: time
 ---
+# Format hearing time
+code: |
+  hearing_time = format_time(MJFraw_hearing_time, format='h:mm a')
+---
+question: |
+  Certificate of Service
+subquestion: |
+  Complete this form to generate a Certificate of Service for this Motion for **${motion_name}** on date **${motion_date}**
+fields:
+  - Document was served: MJFservice_type
+    datatype: radio
+    choices:
+      - by hand
+      - by post
+  - Date of delivery:  service_date
+    datatype: date
+    show if:
+      variable: MJFservice_type
+      is: 'by hand'
+  - Time of delivery:  MJFraw_time
+    datatype: time
+    show if:
+      variable: MJFservice_type
+      is: 'by hand'
+  - Date postage paid: mail_date
+    datatype: date
+    show if:
+      variable: MJFservice_type
+      is: 'by post'
+---
+# If service is by post, populate service by hand variables and vice versa
+code: |
+  if MJFservice_type == 'by hand':
+    # Populate post variables
+    mail_date = ''
+  else:
+    service_date = ''
+    service_time = ''
+---
+# Format raw time into text to display in pdf field
+code: |
+  service_time = format_time(MJFraw_time, format='h:mm')
+---
+# Calculate service_was_in_am from service_time which is now a time type
+code: |
+  if format_time(service_time, format='a') == 'AM':
+    service_was_in_am = True
+    service_was_in_pm = False
+  else:
+    service_was_in_am = False
+    service_was_in_pm = True
+---      
 progress: 100
 mandatory: True
 question: |
@@ -331,31 +360,31 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ users[0].is_plaintiff }
-      - "user_is_defendant": ${ users[0].is_defendant }
-      - "user_is_petitioner": ${ users[0].is_petitioner }
-      - "user_is_respondant": ${ users[0].is_respondant }
+      - "user_is_plaintiff": ${ user_ask_role == 'plaintiff' }
+      - "user_is_defendant": ${ user_ask_role == 'defendant' }
+      - "user_is_petitioner": ${ user_ask_role == 'petitioner' }
+      - "user_is_respondant": ${ user_ask_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
       - "hearing_date_month_day_year": ${ hearing_date_month_day_year }
       - "hearing_time": ${ hearing_time }
       - "user_bbo_number": ${ users[0].bbo_number }
-      - "motion_allowed": ${ motion_allowed }
-      - "motion_denied": ${ motion_denied }
-      - "denied_reason_1": ${ denied_reason_1 }
-      - "denied_reason_2": ${ denied_reason_2 }
-      - "denied_reason_3": ${ denied_reason_3 }
-      - "motion_granted_denied_date": ${ motion_granted_denied_date }
+      - "motion_allowed": ''
+      - "motion_denied": ''
+      - "denied_reason_1": ''
+      - "denied_reason_2": ''
+      - "denied_reason_3": ''
+      - "motion_granted_denied_date": ''
       - "court_division__2": ${ courts[0].division }
       - "motion_name__2": ${ motion_name }
-      - "motion_date__2": ${ motion_date__2 }
-      - "service_was_in_hand": ${ service_was_in_hand }
+      - "motion_date__2": ${ motion_date }
+      - "service_was_in_hand": ${ MJFservice_type == 'by hand' }
       - "service_was_in_am": ${ service_was_in_am }
       - "service_was_in_pm": ${ service_was_in_pm }
       - "service_date": ${ service_date }
       - "service_time": ${ service_time }
-      - "service_was_by_mail": ${ service_was_by_mail }
+      - "service_was_by_mail": ${ MJFservice_type == 'by post' }
       - "mail_date": ${ mail_date }
 ---
 include:
@@ -379,9 +408,8 @@ code: |
   allowed_courts = interview_metadata["Generic_Motion_Family_Law_ready_for_upload0004"]["allowed courts"]
   motion_name
   city
-  user_bbo_number
-  motion_allowed
-  court_division
+  users[0].bbo_number
+  courts[0].division
   docket_numbers[0]
   str(plaintiffs[0])
   str(defendants[0])
@@ -399,13 +427,16 @@ code: |
   other_parties[0].address.city
   other_parties[0].address.state
   other_parties[0].address.zip
+  service_time
+  service_was_in_am
+  service_was_in_pm
+  user_role
+  hearing_time
   # By default, we'll mark any un-filled fields as DAEmpty(). This helps avoid errors if you intentionally hide a logic branch or mark a question not required
   # Comment out the line below if you don't want this behavior. 
   mark_unfilled_fields_empty(interview_metadata["Generic_Motion_Family_Law_ready_for_upload0004"])
   Generic_Motion_Family_Law_ready_for_upload0004_preview_question # Pre-canned preview screen
   basic_questions_signature_flow
-  users[0].signature
-  users[0].signature
   Generic_Motion_Family_Law_ready_for_upload0004 = True
 ---
 continue button field: Generic_Motion_Family_Law_ready_for_upload0004_preview_question
@@ -443,29 +474,29 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ users[0].is_plaintiff }
-      - "user_is_defendant": ${ users[0].is_defendant }
-      - "user_is_petitioner": ${ users[0].is_petitioner }
-      - "user_is_respondant": ${ users[0].is_respondant }
+      - "user_is_plaintiff": ${ user_ask_role == 'plaintiff' }
+      - "user_is_defendant": ${ user_ask_role == 'defendant' }
+      - "user_is_petitioner": ${ user_ask_role == 'petitioner' }
+      - "user_is_respondant": ${ user_ask_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
       - "hearing_date_month_day_year": ${ hearing_date_month_day_year }
       - "hearing_time": ${ hearing_time }
       - "user_bbo_number": ${ users[0].bbo_number }
-      - "motion_allowed": ${ motion_allowed }
-      - "motion_denied": ${ motion_denied }
-      - "denied_reason_1": ${ denied_reason_1 }
-      - "denied_reason_2": ${ denied_reason_2 }
-      - "denied_reason_3": ${ denied_reason_3 }
-      - "motion_granted_denied_date": ${ motion_granted_denied_date }
+      - "motion_allowed": ''
+      - "motion_denied": ''
+      - "denied_reason_1": ''
+      - "denied_reason_2": ''
+      - "denied_reason_3": ''
+      - "motion_granted_denied_date": ''
       - "court_division__2": ${ courts[0].division }
       - "motion_name__2": ${ motion_name }
-      - "motion_date__2": ${ motion_date__2 }
-      - "service_was_in_hand": ${ service_was_in_hand }
+      - "motion_date__2": ${ motion_date }
+      - "service_was_in_hand": ${ MJFservice_type == 'by hand' }
       - "service_was_in_am": ${ service_was_in_am }
       - "service_was_in_pm": ${ service_was_in_pm }
       - "service_date": ${ service_date }
       - "service_time": ${ service_time }
-      - "service_was_by_mail": ${ service_was_by_mail }
+      - "service_was_by_mail": ${ MJFservice_type == 'by post' }
       - "mail_date": ${ mail_date }
