@@ -212,11 +212,7 @@ code: |
   })
 ---
 question: |
-  Commonwealth of Massachusetts
-  
-  The Trial Court
-  
-  Probate and Family Court Department
+  Generic Motion Family Law
 subquestion: |
   #### Information about the motion.
 fields:
@@ -228,11 +224,7 @@ fields:
     datatype: date
 ---
 question: |
-  Commonwealth of Massachusetts
-  
-  The Trial Court
-  
-  Probate and Family Court Department
+  Generic Motion Family Law
 subquestion: |
   #### Representation
 fields:
@@ -249,11 +241,7 @@ code: |
     users[0].bbo_number = 'N/A'
 ---
 question: |
-  Commonwealth of Massachusetts
-  
-  The Trial Court
-  
-  Probate and Family Court Department
+  Generic Motion Family Law
 subquestion: |
   #### Location, date and time of hearing
 fields:
@@ -266,6 +254,29 @@ fields:
 # Format hearing time
 code: |
   hearing_time = format_time(MJFraw_hearing_time, format='h:mm a')
+---
+# If user_ask_role is 'plaintiff', ask if plaintiff or petitioner, likewise
+# for defendant/respondent.  Only one of these two questions will ever
+# be displayed.
+question: |
+  Party Role
+fields:
+  - Indicate if you are the Plaintiff or Petitioner: user_role
+    datatype: radio
+    choices:
+      - Plaintiff: plaintiff
+      - Petitioner: petitioner
+    show if:
+      code: |
+        user_ask_role == 'plaintiff'
+  - Indicate if you are the Defendant or Respondent: user_role
+    datatype: radio
+    choices:
+      - Defendant: defendant
+      - Respondent: respondent
+    show if:
+      code: |
+        user_ask_role == 'defendant'
 ---
 question: |
   Certificate of Service
@@ -293,34 +304,42 @@ fields:
       variable: MJFservice_type
       is: 'by post'
 ---
-# If service is by post, populate service by hand variables and vice versa
+# If service is by post, populate service by hand date variable and vice versa
 code: |
   if MJFservice_type == 'by hand':
     # Populate post variables
     mail_date = ''
   else:
     service_date = ''
-    service_time = ''
 ---
 # Format raw time into text to display in pdf field
 code: |
-  service_time = format_time(MJFraw_time, format='h:mm')
+  if MJFservice_type == 'by hand':
+    service_time = format_time(MJFraw_time, format='h:mm')
+  else:
+    service_time = ''
 ---
 # Calculate service_was_in_am from service_time which is now a time type
 code: |
-  if format_time(service_time, format='a') == 'AM':
-    service_was_in_am = True
-    service_was_in_pm = False
+  if MJFservice_type == 'by hand':
+    if format_time(service_time, format='a') == 'AM':
+      service_was_in_am = True
+      service_was_in_pm = False
+    else:
+      service_was_in_am = False
+      service_was_in_pm = True
   else:
+    # If we're here service is by post
     service_was_in_am = False
-    service_was_in_pm = True
+    service_was_in_pm = False
 ---      
 progress: 100
 mandatory: True
 question: |
-  Placeholder download screen
+  Download your form
 subquestion: |
-  Placeholder
+  Please download a PDF version of your form using the **PDF** link
+  at the bottom of this screen
   
   ### Next steps
   
@@ -360,10 +379,10 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ user_ask_role == 'plaintiff' }
-      - "user_is_defendant": ${ user_ask_role == 'defendant' }
-      - "user_is_petitioner": ${ user_ask_role == 'petitioner' }
-      - "user_is_respondant": ${ user_ask_role == 'respondent' }
+      - "user_is_plaintiff": ${ user_role == 'plaintiff' }
+      - "user_is_defendant": ${ user_role == 'defendant' }
+      - "user_is_petitioner": ${ user_role == 'petitioner' }
+      - "user_is_respondant": ${ user_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
@@ -474,10 +493,10 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ user_ask_role == 'plaintiff' }
-      - "user_is_defendant": ${ user_ask_role == 'defendant' }
-      - "user_is_petitioner": ${ user_ask_role == 'petitioner' }
-      - "user_is_respondant": ${ user_ask_role == 'respondent' }
+      - "user_is_plaintiff": ${ user_role == 'plaintiff' }
+      - "user_is_defendant": ${ user_role == 'defendant' }
+      - "user_is_petitioner": ${ user_role == 'petitioner' }
+      - "user_is_respondant": ${ user_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
