@@ -100,8 +100,8 @@ code: |
        'transformed_variable': 'users[0].is_petitioner',
       'field_type': 'yesno',
       },
-      {'variable': 'user_is_respondant',
-       'transformed_variable': 'users[0].is_respondant',
+      {'variable': 'user_is_respondent',
+       'transformed_variable': 'users[0].is_respondent',
       'field_type': 'yesno',
       },
       {'variable': 'user_requests',
@@ -261,7 +261,7 @@ code: |
 question: |
   Party Role
 fields:
-  - Indicate if you are the Plaintiff or Petitioner: user_role
+  - Indicate if you are the Plaintiff or Petitioner: MJFuser_role
     datatype: radio
     choices:
       - Plaintiff: plaintiff
@@ -269,7 +269,7 @@ fields:
     show if:
       code: |
         user_ask_role == 'plaintiff'
-  - Indicate if you are the Defendant or Respondent: user_role
+  - Indicate if you are the Defendant or Respondent: MJFuser_role
     datatype: radio
     choices:
       - Defendant: defendant
@@ -379,10 +379,10 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ user_role == 'plaintiff' }
-      - "user_is_defendant": ${ user_role == 'defendant' }
-      - "user_is_petitioner": ${ user_role == 'petitioner' }
-      - "user_is_respondant": ${ user_role == 'respondent' }
+      - "user_is_plaintiff": ${ MJFuser_role == 'plaintiff' }
+      - "user_is_defendant": ${ MJFuser_role == 'defendant' }
+      - "user_is_petitioner": ${ MJFuser_role == 'petitioner' }
+      - "user_is_respondent": ${ MJFuser_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
@@ -493,10 +493,10 @@ attachment:
       - "user_signature__2": ${ users[0].signature }
       - "court_division": ${ courts[0].division }
       - "motion_name": ${ motion_name }
-      - "user_is_plaintiff": ${ user_role == 'plaintiff' }
-      - "user_is_defendant": ${ user_role == 'defendant' }
-      - "user_is_petitioner": ${ user_role == 'petitioner' }
-      - "user_is_respondant": ${ user_role == 'respondent' }
+      - "user_is_plaintiff": ${ MJFuser_role == 'plaintiff' }
+      - "user_is_defendant": ${ MJFuser_role == 'defendant' }
+      - "user_is_petitioner": ${ MJFuser_role == 'petitioner' }
+      - "user_is_respondent": ${ MJFuser_role == 'respondent' }
       - "user_requests": ${ users[0].requests }
       - "motion_date": ${ motion_date }
       - "city": ${ city }
